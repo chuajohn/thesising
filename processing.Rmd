@@ -1,0 +1,79 @@
+---
+title: "Data processing"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+library(tidyverse)
+library(readr)   
+library(janitor)
+
+```
+
+# processing 2014 data
+```{r}
+elections_14 <-read_csv("2014 local elections data.csv", col_types = cols(Percent = col_character(),
+                                  Region = col_character(),                   
+                                  Council = col_character(),
+                                  Candidate = col_character(),
+                                  Party = col_character(),
+                                  Votes = col_double(),
+                                  Elected = col_double())) 
+
+processed_elections14 <- elections_14 %>%
+  clean_names() %>%
+  group_by(region_code) %>%
+  group_by(council_code)
+
+processed_elections14 <- processed_elections14 %>%
+  drop_na(votes)
+
+councilCurr <- processed_elections14$council_code[1]
+countCouncilCurr <- 0
+ukipCountCurr <- 0
+otherPartyCountCurr <- 0
+
+for(i in 1:nrow(processed_elections14)){
+  if(processed_elections14$council_code[i] == councilCurr){
+    countCouncilCurr = countCouncilCurr + 1
+    if(processed_elections14$party[i] == "UKIP"){
+      ukipCountCurr = processed_elections14$votes[i]
+    }
+    else if(processed_elections14$votes[i] > otherPartyCountCurr){
+      otherPartyCountCurr = processed_elections14$votes[i]
+    }
+  }
+  else{
+    processed_elections14$vote_difference[(i-countCouncilCurr):(i-1)] = rep((ukipCountCurr - otherPartyCountCurr), countCouncilCurr)
+    councilCurr = processed_elections14$council_code[i] 
+    countCouncilCurr = 1
+    ukipCountCurr = 0
+    otherPartyCountCurr = 0
+    if(processed_elections14$party[i] == "UKIP"){
+      ukipCountCurr = processed_elections14$votes[i]
+    }
+    else{
+      if(processed_elections14$votes[i] > otherPartyCountCurr){
+        otherPartyCountCurr = processed_elections14$votes[i]
+      }
+    }
+  }
+}
+head(processed_elections14$vote_difference)
+  ## if UKIP has highest votes, take UKIP and substract second highest vote count.
+    ##else, take highest vote count and subtract UKIP vote count.
+
+View(processed_elections14)
+
+elections_14 %>%
+    group_by(Council) %>%
+  if (test_expression) {
+statement1
+} else {
+statement2
+}
+
+
+```
+
